@@ -1,0 +1,15 @@
+{
+  "name": "chat-server-doc",
+  "version": "1.0.0",
+  "description": "JobSity Challenge Text Chat Server API Documentation",
+  "title": "JobSity Challenge Text Chat Server API Documentation",
+  "url": "https://chat.example.com",
+  "header": {
+    "title": "Chat Server API",
+    "filename": "./README.md"
+  },
+  "template": {
+    "withCompare": false,
+    "withGenerator": true
+  }
+}
