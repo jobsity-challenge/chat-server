@@ -49,7 +49,7 @@ export abstract class CRUD<T, D extends mongoose.Document> {
    * @param data
    * @param query
    */
-  public update(id: string, data: T, query?: any): Promise<D> {
+  public update(id: string, data?: T, query?: any, update?: any): Promise<D> {
     this._logger.debug("Updating document", { id: id, data: data });
     return new Promise<D>((resolve, reject) => {
       /* Ensuere query is defined */
@@ -61,7 +61,18 @@ export abstract class CRUD<T, D extends mongoose.Document> {
       if (!query["status"]) {
         query["status"] = { $gt: BASE_STATUS.BS_UNKNOWN };
       }
-      const update: any = { $set: data };
+
+      /* Ensure update variable is valid */
+      if (!update) {
+        update = {};
+      }
+
+      /* Check if data is set */
+      if (data) {
+        update["$set"] = data;
+      }
+
+      /* Find and update one document */
       this._model
         .findOneAndUpdate(query, update, { new: true })
         .then((value: D) => {
@@ -163,7 +174,7 @@ export abstract class CRUD<T, D extends mongoose.Document> {
     }
 
     /* Initialize the Mongoose query */
-    let baseQuery = this._model.findOne(query, options ? options : {});
+    let baseQuery = this._model.find(query, options ? options : {});
 
     /* Check if the populate value is set */
     if (populate) {
@@ -174,6 +185,43 @@ export abstract class CRUD<T, D extends mongoose.Document> {
 
     /* Return cursor query */
     return baseQuery.cursor();
+  }
+
+  /**
+   * Fetch all objects as raw query
+   *
+   * @param query
+   * @param options
+   * @param populate
+   */
+  public fetchRaw(
+    query?: any,
+    options?: any,
+    populate?: string[]
+  ): mongoose.DocumentQuery<D[],D> {
+    this._logger.debug("Fetch all documents");
+    /* Ensuere query is defined */
+    if (!query) {
+      query = {};
+    }
+
+    /* Check for defined status */
+    if (!query["status"]) {
+      query["status"] = { $gt: BASE_STATUS.BS_UNKNOWN };
+    }
+
+    /* Initialize the Mongoose query */
+    let baseQuery = this._model.find(query, options ? options : {});
+
+    /* Check if the populate value is set */
+    if (populate) {
+      populate.forEach((value: string) => {
+        baseQuery = baseQuery.populate(value);
+      });
+    }
+
+    /* Return query */
+    return baseQuery;
   }
 
   /**
