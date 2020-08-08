@@ -35,6 +35,12 @@ export const ServiceSettings: ISettings = {
     URI: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/chat_srv",
   },
 
+  AUTH: {
+    SERVER: process.env.AUTH_SERVER || "https://accounts.jobsity.ikoabo.com",
+    ID: "",
+    SECRET: ""
+  },
+
   /* Redis service configuration */
   REDIS: {
     host: "127.0.0.1",
