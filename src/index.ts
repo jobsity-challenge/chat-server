@@ -13,15 +13,16 @@ import { ServiceSettings } from "@/settings/service.settings";
 import farmhash from "farmhash";
 import net from "net";
 import { Redis } from "@/controllers/redis.controller";
-import { Logger } from "./vendor/ikoabo/controllers/logger.controller";
+import { Logger, LOG_LEVEL } from "@/vendor/ikoabo/controllers/logger.controller";
 import cluster from "cluster";
-import { HttpServer } from "./vendor/ikoabo/controllers/server.controller";
+import { HttpServer } from "@/vendor/ikoabo/controllers/server.controller";
 import { RedisClient } from "redis";
-import { ChatServerCtrl } from "./controllers/chat.server.controller";
+import { ChatServerCtrl } from "@/controllers/chat.server.controller";
 import { Server } from "http";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup(ServiceSettings);
+Logger.setLogLevel(ServiceSettings.SERVICE.LOG);
 const _logger: Logger = new Logger("Chat service");
 const workers: any[] = [];
 
@@ -60,11 +61,11 @@ function runMaster() {
     .createServer({ pauseOnConnect: true }, (connection: net.Socket) => {
       let worker =
         workers[
-          getWorkerIndex(connection.remoteAddress, ServiceSettings.INSTANCES)
+          getWorkerIndex(connection.remoteAddress, ServiceSettings.SERVICE.INSTANCES)
         ];
       worker.send("sticky-session:connection", connection);
     })
-    .listen(ServiceSettings.PORT);
+    .listen(ServiceSettings.SERVICE.PORT);
 }
 
 /**
