@@ -138,7 +138,7 @@ export class ClusterServer {
               this._slaveExpress(server, routes).then(() => {
                 this._slavePostExpress(server).then(() => {
                   /* Start the slave worker HTTP server */
-                  server.listen().then(() => {
+                  server.listen(this._settings.SERVICE.PORT).then(() => {
                     if (this._slaveHooks.running) {
                       this._slaveHooks.running();
                     }
