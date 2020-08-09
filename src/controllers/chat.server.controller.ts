@@ -97,6 +97,8 @@ class ChatServer {
       connection.resume();
     });
 
+    let auth: IAuthentication;
+
     /* Base socket.io connection */
     this._io.on('connect', (client: SocketIO.Socket) => {
       let token = client.handshake.query.token;
@@ -107,10 +109,11 @@ class ChatServer {
 
       setTimeout(() => {
         console.log((<any>client)["authentication"]);
+        console.log(auth);
         /*if (!this._activeConnections[deviceToken]) {
             client.disconnect();
         }*/
-      }, 3000);
+      }, 5000);
     });
 
     /* Initialize socket.io namespace */
@@ -122,6 +125,7 @@ class ChatServer {
       const token: string = Objects.get(clientSocket, "handshake.query.token");
       AuthenticationCtrl.authenticate(token, ["user"])
         .then((authentication: IAuthentication) => {
+          auth=authentication;
           this._logger.debug("User connected", authentication);
 
           /* Store and emit the authentication information */
