@@ -97,13 +97,29 @@ class ChatServer {
       connection.resume();
     });
 
+    /* Base socket.io connection */
+    this._io.on('connect', (client: SocketIO.Socket) => {
+      let token = client.handshake.query.token;
+
+      if (!token) {
+        client.disconnect();
+      }
+
+      setTimeout(() => {
+        console.log((<any>client)["authentication"]);
+        /*if (!this._activeConnections[deviceToken]) {
+            client.disconnect();
+        }*/
+      }, 3000);
+    });
+
     /* Initialize socket.io namespace */
     this._nsp = this._io.of("/v1/channel");
 
     /* Listen for user connection event */
     this._nsp.on("connection", (clientSocket: sio.Socket, cb: any) => {
       /* Check for the user authentication */
-      const token: string = Objects.get(clientSocket, "handshake.query.bearer");
+      const token: string = Objects.get(clientSocket, "handshake.query.token");
       AuthenticationCtrl.authenticate(token, ["user"])
         .then((authentication: IAuthentication) => {
           this._logger.debug("User connected", authentication);
