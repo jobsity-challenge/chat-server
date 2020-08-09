@@ -50,8 +50,8 @@ router.post('/rooms',
     ChatroomCtrl.create({
       name: Objects.get(req, 'body.name'),
       topic: Objects.get(req, 'body.topic'),
-      owner: Objects.get(res, 'locals.token.account.id'),
-      users: [Objects.get(res, 'locals.token.account.id')],
+      owner: Objects.get(res, 'locals.authentication.user'),
+      users: [Objects.get(res, 'locals.authentication.user')],
     }).then((chatroom: ChatroomDocument) => {
       /* Set the response information */
       res.locals['response'] = {
