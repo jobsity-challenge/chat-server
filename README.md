@@ -14,7 +14,11 @@ git clone https://gitlab.com/jobsity1/challenge/chat-server.git
 ```
 cd chat-server
 npm install
+npm install --build-from-source farmhash
 ```
+
+Note than `farmhash` dependency must be installed from source code because prebuilt binaries aren't compatible with all architectures.
+
 - Build the project
 ```
 npm run build
@@ -64,7 +68,6 @@ module.exports = {
   apps : [{
     name: 'CHAT-JOBSITY',
     script: 'dist/index.js',
-    instances: 1,
     autorestart: true,
     watch: false,
     env: {
@@ -146,4 +149,3 @@ The project its distributed with a `docs` folder. This folder contains the Postm
 ```bash
 npm run apidoc
 ```
-
