@@ -81,7 +81,7 @@ class Authentication {
       };
 
       /* Validate the token against the auth service */
-      request.post(
+      request.get(
         `${ServiceSettings.AUTH.SERVER}/v1/accounts/validate`,
         opts,
         (error: any, response: request.Response, body: any) => {
