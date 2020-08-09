@@ -18,6 +18,7 @@ import { HttpServer } from "@/vendor/ikoabo/controllers/server.controller";
 import { RedisClient } from "redis";
 import { ChatServerCtrl } from "@/controllers/chat.server.controller";
 import { Server } from "http";
+import ChatroomsRouter from "@/routers/v1/chat.router";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup(ServiceSettings);
@@ -60,7 +61,7 @@ function runMaster() {
     .createServer({ pauseOnConnect: true }, (connection: net.Socket) => {
       let worker =
         workers[
-          getWorkerIndex(connection.remoteAddress, instances)
+        getWorkerIndex(connection.remoteAddress, instances)
         ];
       worker.send("sticky-session:connection", connection);
     })
@@ -70,7 +71,7 @@ function runMaster() {
 /**
  * Entry point for cluster slave process
  */
-function runSlave(server: HttpServer) {
+function runSlave(server: HttpServer, routes?: any) {
   /* Try to connect to redis server */
   Redis.init(ServiceSettings.REDIS).then((connection: RedisClient) => {
     ChatServerCtrl.setupRedis(connection);
@@ -78,7 +79,7 @@ function runSlave(server: HttpServer) {
     /* Initialize service mongo connection */
     server.initMongo().then(() => {
       /* Initialize service express application */
-      server.initExpress().then(() => {
+      server.initExpress(ClusterServer.cluster.worker, routes).then(() => {
         /* Start listen the service and socket.io chat server */
         server.listen(0).then((server: Server) => {
           ChatServerCtrl.setup(server);
@@ -89,4 +90,6 @@ function runSlave(server: HttpServer) {
 }
 
 /* Run cluster with base routes */
-clusterServer.run({}, runMaster, runSlave);
+clusterServer.run({
+  '/v1/chat': ChatroomsRouter
+}, runMaster, runSlave);
