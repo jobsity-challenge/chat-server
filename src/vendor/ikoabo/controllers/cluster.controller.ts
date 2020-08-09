@@ -68,6 +68,13 @@ export class ClusterServer {
   }
 
   /**
+   * Return the cluster import
+   */
+  public static get cluster() {
+    return cluster;
+  }
+
+  /**
    * Run the server cluster
    *
    * @param routes  Routes to initialize the application server

@@ -14,7 +14,6 @@ import farmhash from "farmhash";
 import net from "net";
 import { Redis } from "@/controllers/redis.controller";
 import { Logger, LOG_LEVEL } from "@/vendor/ikoabo/controllers/logger.controller";
-import cluster from "cluster";
 import { HttpServer } from "@/vendor/ikoabo/controllers/server.controller";
 import { RedisClient } from "redis";
 import { ChatServerCtrl } from "@/controllers/chat.server.controller";
@@ -37,7 +36,7 @@ function runMaster() {
 
   /* Helper function for spawning worker at index i */
   const createWorker = (i: number) => {
-    workers[i] = cluster.fork();
+    workers[i] = ClusterServer.cluster.fork();
 
     /* Restart worker on exit */
     workers[i].on("exit", function (code: any, signal: any) {
@@ -47,7 +46,7 @@ function runMaster() {
   };
 
   /* Initialize the workers */
-  for (let i = 0; i < ServiceSettings.SERVICE.INSTANCES; i++) {
+  for (let i = 0; i < instances; i++) {
     createWorker(i);
   }
 
@@ -61,7 +60,7 @@ function runMaster() {
     .createServer({ pauseOnConnect: true }, (connection: net.Socket) => {
       let worker =
         workers[
-          getWorkerIndex(connection.remoteAddress, ServiceSettings.SERVICE.INSTANCES)
+          getWorkerIndex(connection.remoteAddress, instances)
         ];
       worker.send("sticky-session:connection", connection);
     })
