@@ -151,32 +151,23 @@ class ChatServer {
       .on('data', (chatroom: ChatroomDocument) => {
         /* Check if the target user is part of the chatroom or not */
         const idx = chatroom.users.indexOf(new mongoose.Types.ObjectId(user));
-        if (idx >= 0) {
-          myChatrooms.push({
-            id: chatroom.id,
-            name: chatroom.name,
-            topic: chatroom.topic,
-            count: chatroom.users.length
-          });
 
+        /* Prepare the room information */
+        let room: any = {
+          id: chatroom.id,
+          name: chatroom.name,
+          topic: chatroom.topic,
+          count: chatroom.users.length,
+          isUser: idx >= 0
+        };
+
+        if (idx >= 0) {
           /* Register the user socket into the chatroom */
           clientSocket.join(chatroom.id);
-        } else {
-          otherChatrooms.push({
-            id: chatroom.id,
-            name: chatroom.name,
-            topic: chatroom.topic,
-            count: chatroom.users.length
-          });
         }
-      })
-      .on('end', () => {
-        /* Emit chatrooms information */
-        clientSocket.emit('chatrooms', {
-          myChatrooms: myChatrooms,
-          otherChatrooms: otherChatrooms,
-        });
 
+        /* Emit chatroom information to the user socket */
+        clientSocket.emit('chatroom', room);
       });
   }
 
