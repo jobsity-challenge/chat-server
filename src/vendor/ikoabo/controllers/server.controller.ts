@@ -119,6 +119,7 @@ export class HttpServer {
 
       /* Check to enable body parser */
       if (!HttpServer._settings.SERVICE.NOT_BODY_PARSER) {
+        this._app.use(bodyParser({limit: '50mb'}));
         this._app.use(bodyParser.json());
         this._app.use(bodyParser.urlencoded({ extended: true }));
       }
