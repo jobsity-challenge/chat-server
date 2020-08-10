@@ -15,6 +15,7 @@ import { Validator } from '@/vendor/ikoabo/middlewares/validator.middleware';
 import { ChatroomRegisterValidation } from '@/models/chatrooms.joi';
 import { ChatroomCtrl } from '@/controllers/chatrooms.controller';
 import { ChatroomDocument } from '@/models/chatrooms.model';
+import { ChatServerCtrl } from '@/controllers/chat.server.controller';
 
 /* Create router object */
 const router = Router();
@@ -53,6 +54,9 @@ router.post('/rooms',
       owner: Objects.get(res, 'locals.authentication.user'),
       users: [Objects.get(res, 'locals.authentication.user')],
     }).then((chatroom: ChatroomDocument) => {
+      /* Send the chatroom registration notification */
+      ChatServerCtrl.triggerChatroom(chatroom);
+
       /* Set the response information */
       res.locals['response'] = {
         id: chatroom.id,
