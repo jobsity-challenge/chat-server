@@ -1,0 +1,557 @@
+{
+	"info": {
+		"_postman_id": "282e147a-b47c-49fe-be83-986d02b9001d",
+		"name": "Chat Server JobSity Challenge",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create new chatroom",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "c0343441b5c39e29602ec5d6598b956d7807314d41445fa5701f1da31763bc95",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Test chatroom\",\n    \"topic\": \"New test chatroom\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/v1/chat/rooms",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"v1",
+						"chat",
+						"rooms"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Create new chatroom",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test chatroom\",\n    \"topic\": \"New test chatroom\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/v1/chat/rooms",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"rooms"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 10 Aug 2020 19:47:25 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "33"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=2"
+						},
+						{
+							"key": "Vary",
+							"value": "X-HTTP-Method, X-HTTP-Method-Override, X-Method-Override"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "no-referrer"
+						},
+						{
+							"key": "X-Download-Options",
+							"value": "noopen"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=5184000; includeSubDomains"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"21-GrCpz4ep7yfq3DfPGVTjVIcVY54\""
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"5f31a44d252a155be1b9929a\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Join to chatroom",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "c0343441b5c39e29602ec5d6598b956d7807314d41445fa5701f1da31763bc95",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/v1/chat/rooms/join/:id",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"v1",
+						"chat",
+						"rooms",
+						"join",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "5f31a44d252a155be1b9929a"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Join to chatroom",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/v1/chat/rooms/join/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"rooms",
+								"join",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "5f31a44d252a155be1b9929a"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 10 Aug 2020 20:00:29 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "33"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=2"
+						},
+						{
+							"key": "Vary",
+							"value": "X-HTTP-Method, X-HTTP-Method-Override, X-Method-Override"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "no-referrer"
+						},
+						{
+							"key": "X-Download-Options",
+							"value": "noopen"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=5184000; includeSubDomains"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"21-GrCpz4ep7yfq3DfPGVTjVIcVY54\""
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"5f31a44d252a155be1b9929a\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Leave from chatroom",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "c0343441b5c39e29602ec5d6598b956d7807314d41445fa5701f1da31763bc95",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/v1/chat/rooms/leave/:id",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"v1",
+						"chat",
+						"rooms",
+						"leave",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "5f31a44d252a155be1b9929a"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Leave from chatroom",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/v1/chat/rooms/leave/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"rooms",
+								"leave",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "5f31a44d252a155be1b9929a"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 10 Aug 2020 20:00:10 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "33"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=2"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "no-referrer"
+						},
+						{
+							"key": "X-Download-Options",
+							"value": "noopen"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=5184000; includeSubDomains"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"21-GrCpz4ep7yfq3DfPGVTjVIcVY54\""
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"5f31a44d252a155be1b9929a\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Send message",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "c0343441b5c39e29602ec5d6598b956d7807314d41445fa5701f1da31763bc95",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"message\": \"Hello world\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/v1/chat/rooms/message/:id",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"v1",
+						"chat",
+						"rooms",
+						"message",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "5f31a44d252a155be1b9929a"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Send message",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"message\": \"Hello world\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/v1/chat/rooms/message/:id",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"v1",
+								"chat",
+								"rooms",
+								"message",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "5f31a44d252a155be1b9929a"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Mon, 10 Aug 2020 20:01:46 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "33"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=2"
+						},
+						{
+							"key": "Vary",
+							"value": "X-HTTP-Method, X-HTTP-Method-Override, X-Method-Override"
+						},
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "no-referrer"
+						},
+						{
+							"key": "X-Download-Options",
+							"value": "noopen"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=5184000; includeSubDomains"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"21-+MsinmPkwakO85T9n1TlPQp7iH0\""
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"5f31a7aae15e9b54432fb9b5\"\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"id": "f33d5d91-51f5-4b29-a3d9-f4d939534377",
+			"key": "BASE_URL",
+			"value": "http://127.0.0.1:3000"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
