@@ -13,6 +13,6 @@ import { Joi } from "@/vendor/ikoabo/middlewares/validator.middleware";
  * Body schema validation for message creation
  */
 export const MessageRegisterValidation = Joi.object().keys({
-  message: Joi.string().allow("").optional(),
-  image: Joi.string().allow("").optional(),
+  message: Joi.string().allow("").allow(null).optional(),
+  image: Joi.string().allow("").allow(null).optional(),
 });
