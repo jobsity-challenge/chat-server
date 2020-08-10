@@ -239,6 +239,7 @@ class ChatServer {
           /* Send the writting status notification to the chatroom members */
           this._nsp.to(chatroom.id).emit("writing", {
             chatroom: chatroom.id,
+            status: data.status
           });
         })
         .catch((err: any) => {
