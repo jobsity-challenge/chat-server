@@ -21,6 +21,7 @@ import { MESSAGE_TYPE } from '@/models/messages.enum';
 import { Message, MessageDocument } from '@/models/messages.model';
 import { MessageCtrl } from '@/controllers/messages.controller';
 import { MessageRegisterValidation } from '@/models/messages.joi';
+import { AmqpCtrl } from '@/controllers/amqp.controller';
 
 /* Create router object */
 const router = Router();
@@ -210,10 +211,26 @@ router.post('/rooms/message/:id',
         let msgType: MESSAGE_TYPE = MESSAGE_TYPE.MT_TEXT;
 
         /* Check if the received message is a command to handle it with a bot */
-        if (msg.startsWith("/stock")) {
+        if (msg.startsWith("/")) {
+          /* Fetch the authorization token, request auth is validated, so the token is always valid */
+          const authorization: string[] = Objects.get(
+            req,
+            "headers.authorization",
+            ""
+          )
+            .toString()
+            .split(" ");
+
           /* Command messages are handled by Bots */
-          // TODO XXX IMPLEMENT BOT INTEGRATION
-          return;
+          AmqpCtrl.send({
+            chatroom: chatroom.id,
+            token: authorization[1],
+            message: msg
+          });
+
+          /* Send express response */
+          res.locals['response'] = { id: chatroom.id };
+          return next();
         }
 
         /* Check if the message type is an URL link */
