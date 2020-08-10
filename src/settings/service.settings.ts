@@ -43,8 +43,19 @@ export const ServiceSettings: ISettings = {
 
   /* Redis service configuration */
   REDIS: {
-    host: "127.0.0.1",
-    port: 6379,
-    key: "chat.adapter.io",
+    SERVER: process.env.REDIS_SERVER || "127.0.0.1",
+    PORT: parseInt(process.env.REDIS_PORT) || 6379,
+    KEY: process.env.REDIS_KEY || "chat.adapter.io",
   },
+
+  /* Amqp Rabbitmq configuration */
+  AMQP: {
+    PROTOCOL: process.env.AMQP_PROTOCOL || 'amqp',
+    SERVER: process.env.AMQP_SERVER || '127.0.0.1',
+    PORT: parseInt(process.env.AMQP_PORT) || 5672,
+    USERNAME: process.env.AMQP_USERNAME || 'guest',
+    PASSWORD: process.env.AMQP_PASSWORD || 'guest',
+    QUEUE: process.env.AMQP_QUEUE || 'bot-jobsity-chat',
+    BOT_QUEUE: process.env.AMQP_BOT_QUEUE || 'bot-jobsity-bot',
+  }
 };
