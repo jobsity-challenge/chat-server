@@ -17,6 +17,10 @@ import { ChatroomCtrl } from '@/controllers/chatrooms.controller';
 import { ChatroomDocument } from '@/models/chatrooms.model';
 import { ChatServerCtrl } from '@/controllers/chat.server.controller';
 import { mongoose } from '@typegoose/typegoose';
+import { MESSAGE_TYPE } from '@/models/messages.enum';
+import { Message, MessageDocument } from '@/models/messages.model';
+import { MessageCtrl } from '@/controllers/messages.controller';
+import { MessageRegisterValidation } from '@/models/messages.joi';
 
 /* Create router object */
 const router = Router();
@@ -154,6 +158,100 @@ router.delete('/rooms/leave/:id',
       };
       next();
     }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+
+/**
+ * @api {post} /v1/chat/rooms/message/:id Register new message into chatroom
+ * @apiName RegisterMessageChatroom
+ * @apiGroup Chat
+ * @apiPermission 'user'
+ *
+ * @apiDescription Send new message to a chatroom
+ * 
+ * @apiHeader {String} authorization  Bearer \<access token\>
+ *
+ * @apiParam (URL parameter) {String} id  Chatroom identifier (`REQUIRED`)
+ * 
+ * @apiParam (Body request fields) {String} [message]  Message to send
+ * @apiParam (Body request fields) {String} [image]  Base64 image to send as message
+ *
+ * @apiSuccess {String} id Chatroom unique ID
+ * 
+ * @apiError (Error status 401) {Number} error  Error number code
+ * 
+ * `1000` The access token isn't valid
+ * 
+ * `1001` The credentials used to authenticate are invalid
+ * 
+ * `1002` The authenticated account don't holds the required roles
+ */
+router.post('/rooms/message/:id',
+  Validator.joi(ValidateObjectId, 'params'),
+  Validator.joi(MessageRegisterValidation),
+  AuthenticationCtrl.doAuthenticate(),
+  (req: any, res: Response, next: NextFunction) => {
+    const user = new mongoose.Types.ObjectId(Objects.get(res, 'locals.authentication.user'));
+    let query = {};
+
+    /* Check for bot user account */
+    if (Objects.get(res, 'locals.authentication.type') !== 3) {
+      /* If the user is not a bot, then must be registered */
+      query = { users: user };
+    }
+
+    ChatroomCtrl.fetch(req.params['id'], query)
+      .then((chatroom: ChatroomDocument) => {
+        /* Get message */
+        let msg: string = Objects.get(req, "body.message", "").toString();
+        let msgType: MESSAGE_TYPE = MESSAGE_TYPE.MT_TEXT;
+
+        /* Check if the received message is a command to handle it with a bot */
+        if (msg.startsWith("/stock")) {
+          /* Command messages are handled by Bots */
+          // TODO XXX IMPLEMENT BOT INTEGRATION
+          return;
+        }
+
+        /* Check if the message type is an URL link */
+        if (
+          msg.startsWith("http://") ||
+          msg.startsWith("https://") ||
+          msg.startsWith("ftp://")
+        ) {
+          msgType = MESSAGE_TYPE.MT_LINK;
+        }
+
+        /* Check if an image is sent into the message */
+        if (!Objects.get(req, "body.message") && Objects.get(req, "body.image")) {
+          msgType = MESSAGE_TYPE.MT_IMAGE;
+          msg = Objects.get(req, "body.image");
+        }
+
+        /* Create the message */
+        const message: any = {
+          owner: user,
+          chatroom: chatroom.id,
+          type: msgType,
+          message: msg,
+        };
+
+        /* Store the received message */
+        MessageCtrl.create(message)
+          .then((message: MessageDocument) => {
+            /* Emit a notification for the new message */
+            ChatServerCtrl.triggerMessage(chatroom, message);
+
+            /* Send response */
+            res.locals['response'] = { id: message.id };
+            next();
+          })
+          .catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
