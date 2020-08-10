@@ -97,7 +97,7 @@ class Amqp {
    */
   public listen() {
     this._logger.debug('Waiting AMQP messages', { queue: ServiceSettings.AMQP.QUEUE });
-    this._amqpChannel.consume(ServiceSettings.AMQP.QUEUE, function (msg) {
+    this._amqpChannel.consume(ServiceSettings.AMQP.QUEUE, (msg) => {
       try {
         /* Parse the bot message */
         const messageResponse: any = JSON.parse(msg.content.toString());
