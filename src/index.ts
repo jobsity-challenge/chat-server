@@ -19,6 +19,7 @@ import { RedisClient } from "redis";
 import { ChatServerCtrl } from "@/controllers/chat.server.controller";
 import { Server } from "http";
 import ChatroomsRouter from "@/routers/v1/chat.router";
+import { AmqpCtrl } from "./controllers/amqp.controller";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup(ServiceSettings);
@@ -73,7 +74,11 @@ function runMaster() {
  */
 function runSlave(server: HttpServer, routes?: any) {
   /* Try to connect to redis server */
-  Redis.init(ServiceSettings.REDIS).then((connection: RedisClient) => {
+  Redis.init({
+    host: ServiceSettings.REDIS.SERVER,
+    port: ServiceSettings.REDIS.PORT,
+    key: ServiceSettings.REDIS.KEY
+  }).then((connection: RedisClient) => {
     ChatServerCtrl.setupRedis(connection);
 
     /* Initialize service mongo connection */
@@ -82,10 +87,26 @@ function runSlave(server: HttpServer, routes?: any) {
       server.initExpress(ClusterServer.cluster.worker, routes).then(() => {
         /* Start listen the service and socket.io chat server */
         server.listen(0).then((server: Server) => {
+          /* Initialize chat server */
           ChatServerCtrl.setup(server);
+
+          /* Initialize AMQP server */
+          AmqpCtrl.connect().then(() => {
+            AmqpCtrl.listen();
+          }).catch(() => {
+            process.exit(-1);
+          });
+        }).catch(() => {
+          process.exit(-1);
         });
+      }).catch(() => {
+        process.exit(-1);
       });
+    }).catch(() => {
+      process.exit(-1);
     });
+  }).catch(() => {
+    process.exit(-1);
   });
 }
 
