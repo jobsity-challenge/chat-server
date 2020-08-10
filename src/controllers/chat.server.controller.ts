@@ -350,40 +350,6 @@ class ChatServer {
           this._logger.error("Error looking for chatroom", err);
           cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
         });
-
-      /* Get query parameters */
-      const skip = Objects.get(data, "skip");
-      const limit = Objects.get(data, "limit");
-
-      /* Prepare the raw query */
-      let query = MessageCtrl.fetchRaw({}).sort({ createdAt: -1 });
-
-      /* Check for skip parameter */
-      if (skip) {
-        query = query.skip(skip);
-      }
-
-      /* Check for limit parameter */
-      if (limit) {
-        query = query.limit(limit);
-      }
-
-      /* Perform the history query */
-      query
-        .then((messages: MessageDocument[]) => {
-          /* Send the history response */
-          cb({
-            error: CHAT_ERRORS.NO_ERR,
-            messages: messages.map((value) => value.toJSON()),
-          });
-        })
-        .catch((err: any) => {
-          this._logger.error("Error getting messages history", {
-            data: data,
-            error: err,
-          });
-          cb({ error: CHAT_ERRORS.ERR_HISTORY_CANT_BE_RETRIEVED });
-        });
     });
   }
 
