@@ -124,19 +124,64 @@ class ChatServer {
 
           /* Register socket events listeners */
           this._eventDisconnect(clientSocket, authentication.user);
-          this._eventChatroom(clientSocket, authentication.user);
-          this._eventChatrooms(clientSocket, authentication.user);
           this._eventJoin(clientSocket, authentication.user);
           this._eventLeave(clientSocket, authentication.user);
           this._eventMessage(clientSocket, authentication.user);
           this._eventWriting(clientSocket, authentication.user);
           this._eventHistory(clientSocket, authentication.user);
+
+          /* Load all user chatrooms */
+          this._getChatrooms(clientSocket, authentication.user);
         })
         .catch((err: any) => {
           this._logger.error("Error connection user account", err);
           clientSocket.disconnect(true);
         });
     });
+  }
+
+  private _getChatrooms(clientSocket: sio.Socket, user: string) {
+    let myCharrooms: any[] = [];
+    let otherChatrooms: any[] = [];
+    ChatroomCtrl.fetchAll()
+      .next((err: any, chatroom: ChatroomDocument) => {
+        /* Check for error */
+        if (err) {
+          this._logger.error('There were an error getting al chatrooms', err);
+          return;
+        }
+
+        /* Check if all the chatrooms where proccessed */
+        if (!chatroom) {
+          /* Emit chatrooms information */
+          clientSocket.emit('chatrooms', {
+            myChatrooms: myCharrooms,
+            otherChatrooms: otherChatrooms,
+          });
+          return;
+        }
+
+        /* Check if the target user is part of the chatroom or not */
+        const idx = chatroom.users.indexOf(new mongoose.Types.ObjectId(user));
+        if (idx >= 0) {
+          myCharrooms.push({
+            id: chatroom.id,
+            name: chatroom.name,
+            topic: chatroom.topic,
+            count: chatroom.users.length
+          });
+
+          /* Register the user socket into the chatroom */
+          clientSocket.join(chatroom.id);
+        } else {
+          otherChatrooms.push({
+            id: chatroom.id,
+            name: chatroom.name,
+            topic: chatroom.topic,
+            count: chatroom.users.length
+          });
+        }
+      })
   }
 
   /**
@@ -183,8 +228,6 @@ class ChatServer {
 
         /* Clear the client socket listeners */
         clientSocket.removeAllListeners("disconnect");
-        clientSocket.removeAllListeners("chatroom");
-        clientSocket.removeAllListeners("chatrooms");
         clientSocket.removeAllListeners("join");
         clientSocket.removeAllListeners("leave");
         clientSocket.removeAllListeners("message");
@@ -201,75 +244,6 @@ class ChatServer {
           delete this._activeConnections[user];
         }
       }
-    });
-  }
-
-  /**
-   * Handler for chatroom event
-   * Create new chatroom
-   *
-   * @param clientSocket  Client socket
-   * @param user  Authenticated user
-   */
-  private _eventChatroom(clientSocket: sio.Socket, user: string) {
-    /* Register the event listener */
-    clientSocket.on("chatroom", (data, cb) => {
-      /* Create a new chatroom */
-      ChatroomCtrl.create({
-        owner: user,
-        name: data.name,
-        topic: data.topic,
-        users: [<any>user],
-      })
-        .then((chatroom: ChatroomDocument) => {
-          /* Emit the chatroom creation for all users */
-          this._nsp.emit("chatroom", chatroom.toJSON());
-          cb({ error: CHAT_ERRORS.NO_ERR });
-        })
-        .catch((err: any) => {
-          this._logger.error("Error creating the chatroom", {
-            data: data,
-            error: err,
-          });
-          cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
-        });
-    });
-  }
-
-  /**
-   * Handler for chatrooms event
-   * Get a list of chatrooms
-   *
-   * @param clientSocket  Client socket
-   * @param user  Authenticated user
-   */
-  private _eventChatrooms(clientSocket: sio.Socket, user: string) {
-    /* Register the event listener */
-    clientSocket.on("chatrooms", (data, cb) => {
-      const rooms: any[] = [];
-      /* Fetch all chatrooms */
-      const cursor = ChatroomCtrl.fetchAll();
-      cursor.next((err: any, chatroom: ChatroomDocument) => {
-        if (err) {
-          this._logger.error("Error fetching all chatrooms", err);
-          return;
-        }
-
-        /* Check for the last one */
-        if (!chatroom) {
-          cb({ error: CHAT_ERRORS.NO_ERR, chatrooms: rooms });
-          return;
-        }
-
-        /* Register the room into the stack */
-        rooms.push({
-          id: chatroom.id,
-          name: chatroom.name,
-          topic: chatroom.topic,
-          owner: chatroom.owner,
-          present: chatroom.users.indexOf(mongoose.Types.ObjectId(user)) >= 0,
-        });
-      });
     });
   }
 
@@ -475,6 +449,20 @@ class ChatServer {
           });
           cb({ error: CHAT_ERRORS.ERR_HISTORY_CANT_BE_RETRIEVED });
         });
+    });
+  }
+
+  /**
+   * Send notification on new chatroom registered
+   * 
+   * @param chatroom 
+   */
+  public triggerChatroom(chatroom: ChatroomDocument) {
+    this._nsp.emit("chatroom", {
+      id: chatroom.id,
+      name: chatroom.name,
+      topic: chatroom.topic,
+      owner: chatroom.owner
     });
   }
 }
