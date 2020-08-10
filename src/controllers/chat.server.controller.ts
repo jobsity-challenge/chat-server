@@ -383,12 +383,14 @@ class ChatServer {
   public triggerJoin(chatroom: ChatroomDocument, user: string) {
     /* Connect user to the chatroom */
     const sockets: sio.Socket[] = this._activeConnections[user];
-    sockets.forEach((socket: sio.Socket) => {
-      /* Join to the chatroom only if the socket is connected */
-      if (socket.connected) {
-        socket.join(chatroom.id);
-      }
-    });
+    if (sockets && sockets.length > 0) {
+      sockets.forEach((socket: sio.Socket) => {
+        /* Join to the chatroom only if the socket is connected */
+        if (socket.connected) {
+          socket.join(chatroom.id);
+        }
+      });
+    }
 
     /* Emit the chatroom join event for all users in the room */
     this._nsp.to(chatroom.id).emit("join", {
@@ -412,12 +414,14 @@ class ChatServer {
 
     /* Unregister user from the chatroom */
     const sockets: sio.Socket[] = this._activeConnections[user];
-    sockets.forEach((socket: sio.Socket) => {
-      /* Leave from the chatroom only if the socket is connected */
-      if (socket.connected) {
-        socket.leave(chatroom.id);
-      }
-    });
+    if (sockets && sockets.length > 0) {
+      sockets.forEach((socket: sio.Socket) => {
+        /* Leave from the chatroom only if the socket is connected */
+        if (socket.connected) {
+          socket.leave(chatroom.id);
+        }
+      });
+    }
   }
 
   /**
