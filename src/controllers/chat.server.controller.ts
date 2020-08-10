@@ -124,7 +124,7 @@ class ChatServer {
 
           /* Register socket events listeners */
           this._eventDisconnect(clientSocket, authentication.user);
-          this._eventMessage(clientSocket, authentication.user);
+          this._eventSwitch(clientSocket, authentication.user);
           this._eventWriting(clientSocket, authentication.user);
           this._eventHistory(clientSocket, authentication.user);
 
@@ -213,7 +213,7 @@ class ChatServer {
 
         /* Clear the client socket listeners */
         clientSocket.removeAllListeners("disconnect");
-        clientSocket.removeAllListeners("message");
+        clientSocket.removeAllListeners("switch");
         clientSocket.removeAllListeners("writing");
         clientSocket.removeAllListeners("history");
         clientSocket.disconnect(true);
@@ -313,9 +313,7 @@ class ChatServer {
         .then((chatroom: ChatroomDocument) => {
           /* Send the writting status notification to the chatroom members */
           this._nsp.to(chatroom.id).emit("writing", {
-            source: user,
             chatroom: chatroom.id,
-            status: data.status,
           });
         })
         .catch((err: any) => {
@@ -324,6 +322,71 @@ class ChatServer {
         });
     });
   }
+
+  /**
+   * Handler for switch event
+   * Switch to a chatroom
+   *
+   * @param clientSocket  Client socket
+   * @param user  Authenticated user
+   */
+  private _eventSwitch(clientSocket: sio.Socket, user: string) {
+    /* Register the event listener */
+    clientSocket.on("switch", (data, cb) => {
+      /* Look for the target chatroom */
+      ChatroomCtrl.fetch(data.chatroom)
+        .then((chatroom: ChatroomDocument) => {
+          /* Send the chatroom information with users */
+          cb({
+            error: CHAT_ERRORS.NO_ERR, data: {
+              id: chatroom.id,
+              name: chatroom.name,
+              topic: chatroom.topic,
+              users: chatroom.users,
+            }
+          });
+        })
+        .catch((err: any) => {
+          this._logger.error("Error looking for chatroom", err);
+          cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
+        });
+
+      /* Get query parameters */
+      const skip = Objects.get(data, "skip");
+      const limit = Objects.get(data, "limit");
+
+      /* Prepare the raw query */
+      let query = MessageCtrl.fetchRaw({}).sort({ createdAt: -1 });
+
+      /* Check for skip parameter */
+      if (skip) {
+        query = query.skip(skip);
+      }
+
+      /* Check for limit parameter */
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      /* Perform the history query */
+      query
+        .then((messages: MessageDocument[]) => {
+          /* Send the history response */
+          cb({
+            error: CHAT_ERRORS.NO_ERR,
+            messages: messages.map((value) => value.toJSON()),
+          });
+        })
+        .catch((err: any) => {
+          this._logger.error("Error getting messages history", {
+            data: data,
+            error: err,
+          });
+          cb({ error: CHAT_ERRORS.ERR_HISTORY_CANT_BE_RETRIEVED });
+        });
+    });
+  }
+
 
   /**
    * Handler for history event
