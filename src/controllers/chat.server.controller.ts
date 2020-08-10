@@ -176,20 +176,13 @@ class ChatServer {
    * @param status  Changed status
    */
   private _statusChanged(user: string, status: USER_STATUS) {
-    /* Fetch all chatrooms related with the given user */
-    ChatroomCtrl.fetchAll({ users: user })
-      .on("data", (chatroom: ChatroomDocument) => {
-        const statusObj: any = {
-          user: user,
-          status: status,
-        };
-        /* Send notification to the related chatroom */
-        this._logger.debug("User status changed", statusObj);
-        this._nsp.to(chatroom.id).emit("status", statusObj);
-      })
-      .on("error", (err: any) => {
-        this._logger.error("Error on user status changed", err);
-      });
+    const statusObj: any = {
+      user: user,
+      status: status,
+    };
+    /* Send notification to the related chatroom */
+    this._logger.debug("User status changed", statusObj);
+    this._nsp.emit("status", statusObj);
   }
 
   /**
