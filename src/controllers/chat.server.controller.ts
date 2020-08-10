@@ -141,30 +141,18 @@ class ChatServer {
   }
 
   private _getChatrooms(clientSocket: sio.Socket, user: string) {
-    let myCharrooms: any[] = [];
+    let myChatrooms: any[] = [];
     let otherChatrooms: any[] = [];
     ChatroomCtrl.fetchAll()
-      .next((err: any, chatroom: ChatroomDocument) => {
-        /* Check for error */
-        if (err) {
-          this._logger.error('There were an error getting al chatrooms', err);
-          return;
-        }
-
-        /* Check if all the chatrooms where proccessed */
-        if (!chatroom) {
-          /* Emit chatrooms information */
-          clientSocket.emit('chatrooms', {
-            myChatrooms: myCharrooms,
-            otherChatrooms: otherChatrooms,
-          });
-          return;
-        }
-
+      .on('error', (err) => {
+        /* Handle error */
+        this._logger.error('There were an error getting al chatrooms', err);
+      })
+      .on('data', (chatroom: ChatroomDocument) => {
         /* Check if the target user is part of the chatroom or not */
         const idx = chatroom.users.indexOf(new mongoose.Types.ObjectId(user));
         if (idx >= 0) {
-          myCharrooms.push({
+          myChatrooms.push({
             id: chatroom.id,
             name: chatroom.name,
             topic: chatroom.topic,
@@ -182,6 +170,14 @@ class ChatServer {
           });
         }
       })
+      .on('end', () => {
+        /* Emit chatrooms information */
+        clientSocket.emit('chatrooms', {
+          myChatrooms: myChatrooms,
+          otherChatrooms: otherChatrooms,
+        });
+
+      });
   }
 
   /**
