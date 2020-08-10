@@ -124,8 +124,6 @@ class ChatServer {
 
           /* Register socket events listeners */
           this._eventDisconnect(clientSocket, authentication.user);
-          this._eventJoin(clientSocket, authentication.user);
-          this._eventLeave(clientSocket, authentication.user);
           this._eventMessage(clientSocket, authentication.user);
           this._eventWriting(clientSocket, authentication.user);
           this._eventHistory(clientSocket, authentication.user);
@@ -215,8 +213,6 @@ class ChatServer {
 
         /* Clear the client socket listeners */
         clientSocket.removeAllListeners("disconnect");
-        clientSocket.removeAllListeners("join");
-        clientSocket.removeAllListeners("leave");
         clientSocket.removeAllListeners("message");
         clientSocket.removeAllListeners("writing");
         clientSocket.removeAllListeners("history");
@@ -231,70 +227,6 @@ class ChatServer {
           delete this._activeConnections[user];
         }
       }
-    });
-  }
-
-  /**
-   * Handler for join event
-   * Join to a chatroom
-   *
-   * @param clientSocket  Client socket
-   * @param user  Authenticated user
-   */
-  private _eventJoin(clientSocket: sio.Socket, user: string) {
-    /* Register the event listener */
-    clientSocket.on("join", (data, cb) => {
-      /* Add the user to the chatroom */
-      ChatroomCtrl.update(
-        data.chatroom,
-        null,
-        {},
-        { $addToSet: { users: mongoose.Types.ObjectId(user) } }
-      )
-        .then((chatroom: ChatroomDocument) => {
-          /* Emit the chatroom creation for all users */
-          this._nsp.to(chatroom.id).emit("join", user);
-          cb({ error: CHAT_ERRORS.NO_ERR, chatroom: chatroom.toJSON() });
-        })
-        .catch((err: any) => {
-          this._logger.error("Error join to the chatroom", {
-            data: data,
-            error: err,
-          });
-          cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
-        });
-    });
-  }
-
-  /**
-   * Handler for leave event
-   * Leave a chatroom
-   *
-   * @param clientSocket  Client socket
-   * @param user  Authenticated user
-   */
-  private _eventLeave(clientSocket: sio.Socket, user: string) {
-    /* Register the event listener */
-    clientSocket.on("leave", (data, cb) => {
-      /* Remove the user from the chatroom */
-      ChatroomCtrl.update(
-        data.chatroom,
-        null,
-        {},
-        { $pullAll: { users: [mongoose.Types.ObjectId(user)] } }
-      )
-        .then((chatroom: ChatroomDocument) => {
-          /* Emit the chatroom user leave */
-          this._nsp.to(chatroom.id).emit("leave", user);
-          cb({ error: CHAT_ERRORS.NO_ERR, chatroom: chatroom.toJSON() });
-        })
-        .catch((err: any) => {
-          this._logger.error("Error leaving the chatroom", {
-            data: data,
-            error: err,
-          });
-          cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
-        });
     });
   }
 
@@ -442,14 +374,63 @@ class ChatServer {
   /**
    * Send notification on new chatroom registered
    * 
-   * @param chatroom 
+   * @param chatroom Registered chatroom
+   * @param isUser  Paramteter to handle is the authenticated user belongs to the chatroom
    */
-  public triggerChatroom(chatroom: ChatroomDocument) {
+  public triggerChatroom(chatroom: ChatroomDocument, isUser?: boolean) {
     this._nsp.emit("chatroom", {
       id: chatroom.id,
       name: chatroom.name,
       topic: chatroom.topic,
-      owner: chatroom.owner
+      owner: chatroom.owner,
+      count: chatroom.users.length,
+      isUser: isUser
+    });
+  }
+
+  /**
+   * Send notification about user joining the chatroom
+   * 
+   * @param chatroom  Target chatroom
+   * @param user  User ID registered in the target chatroom
+   */
+  public triggerJoin(chatroom: ChatroomDocument, user: string) {
+    /* Connect user to the chatroom */
+    const sockets: sio.Socket[] = this._activeConnections[user];
+    sockets.forEach((socket: sio.Socket) => {
+      /* Join to the chatroom only if the socket is connected */
+      if (socket.connected) {
+        socket.join(chatroom.id);
+      }
+    });
+
+    /* Emit the chatroom join event for all users in the room */
+    this._nsp.to(chatroom.id).emit("join", {
+      user: user,
+      chatroom: chatroom.id
+    });
+  }
+
+  /**
+   * Send notification about user leaving the chatroom
+   * 
+   * @param chatroom  Target chatroom
+   * @param user  User ID inregistered from the target chatroom
+   */
+  public triggerLeave(chatroom: ChatroomDocument, user: string) {
+    /* Emit the chatroom leave event for all users in the room */
+    this._nsp.to(chatroom.id).emit("leave", {
+      user: user,
+      chatroom: chatroom.id
+    });
+
+    /* Unregister user from the chatroom */
+    const sockets: sio.Socket[] = this._activeConnections[user];
+    sockets.forEach((socket: sio.Socket) => {
+      /* Leave from the chatroom only if the socket is connected */
+      if (socket.connected) {
+        socket.leave(chatroom.id);
+      }
     });
   }
 }
