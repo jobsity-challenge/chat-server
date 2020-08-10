@@ -224,74 +224,6 @@ class ChatServer {
   }
 
   /**
-   * Handler for message event
-   * Send a new message to a chatroom
-   *
-   * @param clientSocket  Client socket
-   * @param user  Authenticated user
-   */
-  private _eventMessage(clientSocket: sio.Socket, user: string) {
-    /* Register the event listener */
-    clientSocket.on("message", (data: any, cb) => {
-      /* Look for the target chatroom */
-      ChatroomCtrl.fetch(data.chatroom, { users: user })
-        .then((chatroom: ChatroomDocument) => {
-          const msg: string = Objects.get(data, "message", "").toString();
-          let msgType: MESSAGE_TYPE = MESSAGE_TYPE.MT_TEXT;
-
-          /* Check if the received message is a command to handle it with a bot */
-          if (msg.startsWith("/stock")) {
-            /* Command messages are handled by Bots */
-            // TODO XXX IMPLEMENT BOT INTEGRATION
-            return;
-          }
-
-          /* Check if the message type is an URL link */
-          if (
-            msg.startsWith("http://") ||
-            msg.startsWith("https://") ||
-            msg.startsWith("ftp://")
-          ) {
-            msgType = MESSAGE_TYPE.MT_LINK;
-          }
-
-          /* Check if an image is sent into the message */
-          if (!data.message && data.image) {
-            msgType = MESSAGE_TYPE.MT_IMAGE;
-          }
-
-          /* Create the message */
-          const message: Message = {
-            owner: user,
-            chatroom: chatroom.id,
-            type: msgType,
-            message: data.message || data.image,
-          };
-
-          /* Store the received message */
-          MessageCtrl.create(message)
-            .then((message: MessageDocument) => {
-              /* Emit a notification for the new message */
-              this._nsp.to(chatroom.id).emit("message", {
-                error: 0,
-                chatroom: chatroom.id,
-                msg: message.toJSON(),
-              });
-              cb({ error: CHAT_ERRORS.NO_ERR, id: message.id });
-            })
-            .catch((err: any) => {
-              this._logger.error("Error storing message", err);
-              cb({ error: CHAT_ERRORS.ERR_MESSAGE_CANT_BE_SEND });
-            });
-        })
-        .catch((err: any) => {
-          this._logger.error("Error looking for chatroom", err);
-          cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
-        });
-    });
-  }
-
-  /**
    * Handler for writing event
    * Send writing status
    *
@@ -329,15 +261,26 @@ class ChatServer {
       /* Look for the target chatroom */
       ChatroomCtrl.fetch(data.chatroom)
         .then((chatroom: ChatroomDocument) => {
-          /* Send the chatroom information with users */
-          cb({
-            error: CHAT_ERRORS.NO_ERR, data: {
-              id: chatroom.id,
-              name: chatroom.name,
-              topic: chatroom.topic,
-              users: chatroom.users,
-            }
-          });
+          /* Fetch messages history */
+          this._getHistory(chatroom, 0, 50)
+            .then((msgs: any[]) => {
+              /* Send the chatroom information with users and messages */
+              cb({
+                error: CHAT_ERRORS.NO_ERR, data: {
+                  id: chatroom.id,
+                  name: chatroom.name,
+                  topic: chatroom.topic,
+                  users: chatroom.users,
+                  messages: msgs
+                }
+              });
+            }).catch((err: any) => {
+              this._logger.error("Error getting messages history", {
+                data: data,
+                error: err,
+              });
+              cb({ error: CHAT_ERRORS.ERR_HISTORY_CANT_BE_RETRIEVED });
+            });
         })
         .catch((err: any) => {
           this._logger.error("Error looking for chatroom", err);
@@ -346,23 +289,16 @@ class ChatServer {
     });
   }
 
-
   /**
-   * Handler for history event
-   * Retrieve chatroom history
-   *
-   * @param clientSocket  Client socket
-   * @param user  Authenticated user
+   * Perform database query to fetch history messages
+   * 
+   * @param skip 
+   * @param limit 
    */
-  private _eventHistory(clientSocket: sio.Socket, user: string) {
-    /* Register the event listener */
-    clientSocket.on("history", (data, cb) => {
-      /* Get query parameters */
-      const skip = Objects.get(data, "skip");
-      const limit = Objects.get(data, "limit");
-
+  private _getHistory(chatroom: ChatroomDocument, skip: number, limit: number): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
       /* Prepare the raw query */
-      let query = MessageCtrl.fetchRaw({}).sort({ createdAt: -1 });
+      let query = MessageCtrl.fetchRaw({ chatroom: chatroom.id }).sort({ createdAt: -1 });
 
       /* Check for skip parameter */
       if (skip) {
@@ -378,17 +314,45 @@ class ChatServer {
       query
         .then((messages: MessageDocument[]) => {
           /* Send the history response */
-          cb({
-            error: CHAT_ERRORS.NO_ERR,
-            messages: messages.map((value) => value.toJSON()),
-          });
+          resolve(messages.map((value) => value.toJSON()))
+        })
+        .catch(reject);
+    })
+  }
+
+  /**
+   * Handler for history event
+   * Retrieve chatroom history
+   *
+   * @param clientSocket  Client socket
+   * @param user  Authenticated user
+   */
+  private _eventHistory(clientSocket: sio.Socket, user: string) {
+    /* Register the event listener */
+    clientSocket.on("history", (data, cb) => {
+      /* Get query parameters */
+      const skip = Objects.get(data, "skip");
+      const limit = Objects.get(data, "limit");
+
+      ChatroomCtrl.fetch(data.chatroom)
+        .then((chatroom: ChatroomDocument) => {
+          this._getHistory(chatroom, skip, limit)
+            .then((msgs: any[]) => {
+              cb({
+                error: CHAT_ERRORS.NO_ERR,
+                messages: msgs,
+              });
+            }).catch((err: any) => {
+              this._logger.error("Error getting messages history", {
+                data: data,
+                error: err,
+              });
+              cb({ error: CHAT_ERRORS.ERR_HISTORY_CANT_BE_RETRIEVED });
+            });
         })
         .catch((err: any) => {
-          this._logger.error("Error getting messages history", {
-            data: data,
-            error: err,
-          });
-          cb({ error: CHAT_ERRORS.ERR_HISTORY_CANT_BE_RETRIEVED });
+          this._logger.error("Error looking for chatroom", err);
+          cb({ error: CHAT_ERRORS.ERR_INVALID_CHATROOM });
         });
     });
   }
@@ -454,6 +418,17 @@ class ChatServer {
         socket.leave(chatroom.id);
       }
     });
+  }
+
+  /**
+   * Send notification about user leaving the chatroom
+   * 
+   * @param chatroom  Target chatroom
+   * @param message  Message received
+   */
+  public triggerMessage(chatroom: ChatroomDocument, message: MessageDocument) {
+    /* Emit the message to the chatroom */
+    this._nsp.to(chatroom.id).emit("message", message);
   }
 }
 
