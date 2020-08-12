@@ -65,22 +65,6 @@ class ChatServer {
 
   public setupRedis(connection: RedisClient) {
     this._redis = connection;
-    this._cleanupCache();
-  }
-
-  /**
-   * Cleanup the client connection cache
-   */
-  private _cleanupCache() {
-    this._redis.scan("0", "MATCH", "active-clients-*", (err, keys) => {
-      keys.forEach((connection) => {
-        if (connection instanceof Array) {
-          connection.forEach((c) => {
-            this._redis.del(c);
-          });
-        }
-      });
-    });
   }
 
   public setup(server: Server) {
